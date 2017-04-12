@@ -73,7 +73,7 @@ function drawCheckerboard() {
     var checkerboard = new THREE.Group();
     for (var i = -CHECKERBOARDS_ALONG_HALF_EDGE; i < CHECKERBOARDS_ALONG_HALF_EDGE; i++) {
         for (var j = -CHECKERBOARDS_ALONG_HALF_EDGE; j < CHECKERBOARDS_ALONG_HALF_EDGE; j++) {
-            var geometry = new THREE.PlaneGeometry( CHECKERBOARD_LENGTH, CHECKERBOARD_LENGTH );
+            var geometry = new THREE.PlaneBufferGeometry( CHECKERBOARD_LENGTH, CHECKERBOARD_LENGTH );
             var material;
             if ( (i + j) % 2 === 0 ) {
                 material = new THREE.MeshPhongMaterial( {color: 0xeeeeee, side: THREE.DoubleSide} );
@@ -161,13 +161,14 @@ function drawCuboids() {
     var i;
     var cuboids = new THREE.Group();
 
-    var geometry = new THREE.BoxGeometry(GRID_WIDHT, GRID_HEIGHT, GRID_DEPTH,
+    var geometry = new THREE.BoxBufferGeometry(GRID_WIDHT, GRID_HEIGHT, GRID_DEPTH,
         CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS);
     var gridPosition = new GridPosition(0,0,0);
     CUBOIDS_POSITIONS.forEach(function(item) {
-        var material = new THREE.MeshPhongMaterial({color: getRandColor()});
+        var material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
         var cuboid = new THREE.Mesh(geometry, material);
         cuboid.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
+        cuboid.matrixAutoUpdate = true;
         cuboids.add(cuboid);
     });
 
@@ -263,9 +264,6 @@ var cameraEllipseAnimate = {
         }
     }
 };
-
-// var period0 = 0;
-// var theta = 0;
 
 function animate() {
     // line
