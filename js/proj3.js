@@ -10,6 +10,20 @@ document.body.onload = function () {
     redraw();
 };
 
+var playAnimation = true;
+document.body.onkeydown = function (event) {
+    "use strict";
+    var keycode = parseInt(event.keyCode);
+    if ('A'.charCodeAt(0) <= keycode && keycode <= 'Z'.charCodeAt(0)) {
+       switch (keycode) {
+           case 'P'.charCodeAt(0):
+               playAnimation = !playAnimation;
+               errout("playAnimation = " + playAnimation);
+               break;
+       }
+    }
+};
+
 // 初始化的图形绘制
 var scene = new THREE.Scene();
 var camera, renderer, raycaster;
@@ -102,6 +116,12 @@ GridPosition.prototype = {
         var v3 = new THREE.Vector3(x, y, z);
         return v3;
     },
+    setPosition: function(nx, ny, nz) {
+        this.nx = nx;
+        this.ny = ny;
+        this.nz = nz;
+        return this;
+    },
     setLength: function(width, height, depth) {
         "use strict";
         var cur = GridPosition.prototype;
@@ -122,15 +142,15 @@ GridPosition.prototype.setLength(GRID_WIDHT, GRID_HEIGHT, GRID_DEPTH);
 
 
 var CUBOIDS_POSITIONS = [
-    new GridPosition(0,0,0),
-    new GridPosition(1,0,-1),
-    new GridPosition(1,0,1),
-    new GridPosition(0,2,0),
-    new GridPosition(0,1,1),
-    new GridPosition(1,1,-2),
-    new GridPosition(1,2,-3),
-    new GridPosition(1,1,0),
-    new GridPosition(1,1,2)
+    [0,0,0],
+    [1,0,-1],
+    [1,0,1],
+    [0,2,0],
+    [0,1,1],
+    [1,1,-2],
+    [1,2,-3],
+    [1,1,0],
+    [1,1,2]
 ];
 var CUBOIDS_SEGMENTS = 1;
 
@@ -143,10 +163,11 @@ function drawCuboids() {
 
     var geometry = new THREE.BoxGeometry(GRID_WIDHT, GRID_HEIGHT, GRID_DEPTH,
         CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS);
+    var gridPosition = new GridPosition(0,0,0);
     CUBOIDS_POSITIONS.forEach(function(item) {
         var material = new THREE.MeshPhongMaterial({color: getRandColor()});
         var cuboid = new THREE.Mesh(geometry, material);
-        cuboid.position.copy(item.getVector3());
+        cuboid.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
         cuboids.add(cuboid);
     });
 
@@ -156,11 +177,11 @@ function drawCuboids() {
 
 
 var POINT_LIGHT_POSITIONS = [
-    new GridPosition(1,0,0),
-    new GridPosition(1,0,-3),
-    new GridPosition(1,0,2),
-    new GridPosition(10,2,0),
-    new GridPosition(-10,2,0)
+    [1,0,0],
+    [1,0,-3],
+    [1,0,2],
+    [10,2,0],
+    [-10,2,0]
 ];
 
 // updateLight(): Add the ambient light, the point lights, and even the rectangle lights.
@@ -174,9 +195,10 @@ function updateLight() {
 
     light.add(new THREE.AmbientLight(0xffffff, 0.25));
 
+    var gridPosition = new GridPosition(0,0,0);
     POINT_LIGHT_POSITIONS.forEach(function(item) {
         var point = new THREE.PointLight(color, intensity, distance, decay);
-        point.position.copy(item.getVector3());
+        point.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
         light.add(point);
         var point_helper = new THREE.PointLightHelper(point, 25);
         light.add(point_helper);
@@ -208,7 +230,7 @@ function launchDefaultCamera() {
 }
 
 function updateCamera() {
-    lPosition = new THREE.Vector3(0,0,0);
+    "use strict";
     camera.lookAt(LOOKING_AT_POSITION);
     camera.updateMatrixWorld();
 }
@@ -263,12 +285,15 @@ function render() {
     "use strict";
     requestId = requestAnimationFrame(render);
 
-    updateCamera();
-
     // 用于统计帧速率
     frameCount++;
 
-    animate();
+    // 控制是否播放动画
+    if (playAnimation) {
+        animate();
+    }
+    // updateCamera()必须放在animate()的后边，不然会造成播放和暂停切换瞬间的抖动问题
+    updateCamera();
 
     renderer.render(scene, camera);
 }

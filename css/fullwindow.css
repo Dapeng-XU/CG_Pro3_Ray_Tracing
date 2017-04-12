@@ -84,3 +84,14 @@ canvas {
     left: 0px;
     top: 0px;
 }
+
+.key {
+    padding-bottom: 2px;
+    padding-top: 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 7px;
+    font-weight: bold;
+    background-color: #CEC3C0;
+    color: #000000;
+}
