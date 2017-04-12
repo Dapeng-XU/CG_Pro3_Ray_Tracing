@@ -47,7 +47,7 @@ function initGraphics() {
     renderer.setSize(canvWidth, canvHeight);
     // 设置画布默认的背景色
     renderer.setClearColor(DEFAULT_BACKGROUND_COLOR);
-    if (window.devidevicePixelRatio) {
+    if (window.devicePixelRatio) {
         renderer.setPixelRatio(window.devicePixelRatio);
     }
     renderer.sortObjects = false;
