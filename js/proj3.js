@@ -76,7 +76,6 @@ var canv = document.getElementById('canvas');
 var DEFAULT_BACKGROUND_COLOR = 0x444444;
 function initGraphics() {
     "use strict";
-    var i, j;
 
     // Three.js的三要素：场景、相机、渲染器。
     // 相机的初始化代码提到后面了
@@ -170,8 +169,7 @@ GridPosition.prototype = {
         var x = this.nx * cur.width;
         var y = cur.halfHeight + this.ny * cur.height;
         var z = this.nz * cur.depth;
-        var v3 = new THREE.Vector3(x, y, z);
-        return v3;
+        return new THREE.Vector3(x, y, z);
     },
     setPosition: function(nx, ny, nz) {
         this.nx = nx;
@@ -215,7 +213,6 @@ var CUBOIDS_SEGMENTS = 1;
 // creates the cuboids in the scene.
 function drawCuboids() {
     "use strict";
-    var i;
     var cuboids = new THREE.Group();
 
     var geometry = new THREE.BoxBufferGeometry(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH,
@@ -252,7 +249,6 @@ var SPHERES_POSITIONS = [
 // creates the cuboids in the scene.
 function drawSpheres() {
     "use strict";
-    var i;
     var cuboids = new THREE.Group();
 
     var geometry = new THREE.SphereBufferGeometry(GRID_WIDTH / 2);
