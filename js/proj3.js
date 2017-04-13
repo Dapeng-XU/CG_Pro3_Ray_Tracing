@@ -10,7 +10,35 @@ document.body.onload = function () {
     redraw();
 };
 
+var GOURAUD_SHADING = 0;
+var PHONG_SHADING = 1;
+var shadingMethod = 1 - PHONG_SHADING;
+function switchShading() {
+    shadingMethod = 1 - shadingMethod;
+    var label = $("#cur-shading");
+    switch(shadingMethod) {
+        case GOURAUD_SHADING:
+            label.html('Gouraud Shading');
+            break;
+        case PHONG_SHADING:
+            label.html('Phong Shading');
+            break;
+    }
+}
+// Allow the user to change the shading method after
+var SWITCH_SHADING_MINIMAL_INTERVAL = 3000;
+var switchShadingWaitingHandle = null;
+function waitShading_Begin() {
+    switching = true;
+    switchShadingWaitingHandle = setInterval("waitShading_End()", SWITCH_SHADING_MINIMAL_INTERVAL);
+}
+function waitShading_End() {
+    window.clearInterval(switchShadingWaitingHandle);
+    switching = false;
+}
+
 var playAnimation = true;
+var switching = false;
 document.body.onkeydown = function (event) {
     "use strict";
     var keycode = parseInt(event.keyCode);
@@ -24,10 +52,25 @@ document.body.onkeydown = function (event) {
     }
 };
 
+document.body.onkeyup = function (event) {
+    "use strict";
+    var keycode = parseInt(event.keyCode);
+    if ('A'.charCodeAt(0) <= keycode && keycode <= 'Z'.charCodeAt(0)) {
+        switch (keycode) {
+            case 'S'.charCodeAt(0):
+                if (!switching) {
+                    waitShading_Begin();
+                    switchShading();
+                    redraw();
+                }
+                break;
+        }
+    }
+};
+
 // 初始化的图形绘制
 var scene = new THREE.Scene();
 var camera, renderer, raycaster;
-var light = new THREE.Group();
 var canv = document.getElementById('canvas');
 // 默认背景色
 var DEFAULT_BACKGROUND_COLOR = 0x444444;
@@ -52,6 +95,7 @@ function initGraphics() {
     }
     renderer.sortObjects = false;
 
+    switchShading();
     drawCheckerboard();
     drawCuboids();
 
@@ -75,10 +119,22 @@ function drawCheckerboard() {
         for (var j = -CHECKERBOARDS_ALONG_HALF_EDGE; j < CHECKERBOARDS_ALONG_HALF_EDGE; j++) {
             var geometry = new THREE.PlaneBufferGeometry( CHECKERBOARD_LENGTH, CHECKERBOARD_LENGTH );
             var material;
-            if ( (i + j) % 2 === 0 ) {
-                material = new THREE.MeshPhongMaterial( {color: 0xeeeeee, side: THREE.DoubleSide} );
-            } else {
-                material = new THREE.MeshPhongMaterial( {specular: 0x111111, side: THREE.DoubleSide} );
+            // The color attribute of the material must be assigned in the constructor parameters.
+            switch (shadingMethod) {
+                case GOURAUD_SHADING:
+                    if ( (i + j) % 2 === 0 ) {
+                        material = new THREE.MeshLambertMaterial( {color: 0xeeeeee, side: THREE.BackSide} );
+                    } else {
+                        material = new THREE.MeshLambertMaterial( {specular: 0x111111, side: THREE.BackSide} );
+                    }
+                    break;
+                case PHONG_SHADING:
+                    if ( (i + j) % 2 === 0 ) {
+                        material = new THREE.MeshPhongMaterial( {color: 0xeeeeee, side: THREE.BackSide} );
+                    } else {
+                        material = new THREE.MeshPhongMaterial( {specular: 0x111111, side: THREE.BackSide} );
+                    }
+                    break;
             }
             var plane = new THREE.Mesh( geometry, material );
             plane.translateX(i * CHECKERBOARD_LENGTH);
@@ -165,7 +221,16 @@ function drawCuboids() {
         CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS);
     var gridPosition = new GridPosition(0,0,0);
     CUBOIDS_POSITIONS.forEach(function(item) {
-        var material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+        var material;
+        // The color attribute of the material must be assigned in the constructor parameters.
+        switch (shadingMethod) {
+            case GOURAUD_SHADING:
+                material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
+                break;
+            case PHONG_SHADING:
+                material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+                break;
+        }
         var cuboid = new THREE.Mesh(geometry, material);
         cuboid.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
         cuboid.matrixAutoUpdate = true;
@@ -189,11 +254,13 @@ var POINT_LIGHT_POSITIONS = [
 // According to the positions defined in POINT_LIGHT_POSITIONS,
 // creates the point lights in the scene.
 function updateLight() {
+    // Parameters for the light sources.
     var color = 0xffffff;
     var intensity = 0.75;
     var distance = 10000;
     var decay = 2;
 
+    var light = new THREE.Group();
     light.add(new THREE.AmbientLight(0xffffff, 0.25));
 
     var gridPosition = new GridPosition(0,0,0);
