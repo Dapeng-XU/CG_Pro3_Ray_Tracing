@@ -99,7 +99,9 @@ function FPS() {
     if (!DEBUG_ON_OFF) {
         return;
     }
-    errout(Date.now() + ": " + (frameCount - lastFrameCount) + 'FPS');
+    var curDate = new Date();
+    errout(curDate.getHours() + ":" + curDate.getMinutes() + ":" + curDate.getSeconds()
+        + " : " + (frameCount - lastFrameCount) + 'FPS');
     lastFrameCount = frameCount;
     if (FPSHandle !== null) {
         window.clearInterval(FPSHandle);
