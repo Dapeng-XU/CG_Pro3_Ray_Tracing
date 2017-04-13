@@ -93,6 +93,7 @@ function getRandColor() {
 // 显示帧速率
 var lastFrameCount = 0;
 var frameCount = 0;
+var FPSHandle = null;
 function FPS() {
     "use strict";
     if (!DEBUG_ON_OFF) {
@@ -100,7 +101,10 @@ function FPS() {
     }
     errout(Date.now() + ": " + (frameCount - lastFrameCount) + 'FPS');
     lastFrameCount = frameCount;
-    window.setTimeout(FPS, 1000);
+    if (FPSHandle !== null) {
+        window.clearInterval(FPSHandle);
+    }
+    FPSHandle = window.setTimeout(FPS, 1000);
 }
 
 // 画布的宽和高，涉及到绘制区域的大小，统一使用这两个变量。
@@ -130,8 +134,12 @@ function redraw() {
     "use strict";
     canvasResize();
     var i;
-    for (i=0;i<scene.children.length;i++) {
-        scene.remove(scene.children[i]);
+    // scene.children.forEach(function(item) {
+    //     scene.remove(item);
+    // });
+    var listLength = scene.children.length;
+    for (i=0;i<listLength;i++) {
+        scene.remove(scene.children[0]);
     }
     // 可能涉及到更复杂的问题
     // 避免多个requestAnimationFrame()循环同时绘制图像，造成帧速率太高（远高于60FPS）
