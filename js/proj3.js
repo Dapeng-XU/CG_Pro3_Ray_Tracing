@@ -98,6 +98,7 @@ function initGraphics() {
     switchShading();
     drawCheckerboard();
     drawCuboids();
+    drawSpheres();
 
     // 显示一个坐标轴，红色X，绿色Y，蓝色Z
     var axisHelper = new THREE.AxisHelper(2000);
@@ -190,10 +191,10 @@ GridPosition.prototype = {
     }
 };
 
-var GRID_WIDHT = 80;
+var GRID_WIDTH = 80;
 var GRID_HEIGHT = 80;
 var GRID_DEPTH = 80;
-GridPosition.prototype.setLength(GRID_WIDHT, GRID_HEIGHT, GRID_DEPTH);
+GridPosition.prototype.setLength(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH);
 
 
 
@@ -217,10 +218,46 @@ function drawCuboids() {
     var i;
     var cuboids = new THREE.Group();
 
-    var geometry = new THREE.BoxBufferGeometry(GRID_WIDHT, GRID_HEIGHT, GRID_DEPTH,
+    var geometry = new THREE.BoxBufferGeometry(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH,
         CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS);
     var gridPosition = new GridPosition(0,0,0);
     CUBOIDS_POSITIONS.forEach(function(item) {
+        var material;
+        // The color attribute of the material must be assigned in the constructor parameters.
+        switch (shadingMethod) {
+            case GOURAUD_SHADING:
+                material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
+                break;
+            case PHONG_SHADING:
+                material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+                break;
+        }
+        var cuboid = new THREE.Mesh(geometry, material);
+        cuboid.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
+        cuboid.matrixAutoUpdate = true;
+        cuboids.add(cuboid);
+    });
+
+    scene.add(cuboids);
+}
+
+
+
+var SPHERES_POSITIONS = [
+    [4,0,2],
+    [2,0,4]
+];
+
+// drawCuboids(): According to the positions defined in CUBOIDS_POSITIONS,
+// creates the cuboids in the scene.
+function drawSpheres() {
+    "use strict";
+    var i;
+    var cuboids = new THREE.Group();
+
+    var geometry = new THREE.SphereBufferGeometry(GRID_WIDTH / 2);
+    var gridPosition = new GridPosition(0,0,0);
+    SPHERES_POSITIONS.forEach(function(item) {
         var material;
         // The color attribute of the material must be assigned in the constructor parameters.
         switch (shadingMethod) {
