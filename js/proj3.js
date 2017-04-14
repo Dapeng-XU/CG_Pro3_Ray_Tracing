@@ -105,6 +105,7 @@ function initGraphics() {
 
     updateLight();
     launchDefaultCamera();
+    animate();
     FPS();
 
     render();
@@ -226,7 +227,37 @@ function drawCuboids() {
                 material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
                 break;
             case PHONG_SHADING:
-                material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+                // material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+
+                material = new THREE.ShaderMaterial({
+                    defines: {
+                        // USE_COLOR: 1
+                    },
+                    uniforms: {
+                        "halfWidth": {
+                            value: GRID_WIDTH / 2
+                        },
+                        "faceColor": {
+                            // value: new THREE.Vector3(0, 0, 0)
+                            value: new THREE.Vector3(Math.random(), Math.random(), Math.random())
+                        }
+                    },
+                    // attributes: {
+                    //     // faceColor: new THREE.Vector3(Math.random(), Math.random(), Math.random())
+                    //
+                    // },
+                    vertexColors: THREE.FaceColors,
+                    vertexShader: cuboidsVertexShader,
+                    fragmentShader: cuboidsFragmentShader
+
+                });
+
+
+
+
+
+
+
                 break;
         }
         var cuboid = new THREE.Mesh(geometry, material);
@@ -325,9 +356,7 @@ function launchDefaultCamera() {
     camera.position.x = one;
     camera.position.y = one;
     camera.position.z = one;
-    camera.lookAt(LOOKING_AT_POSITION);
-    // scene.add(camera);
-    camera.updateMatrixWorld();
+    updateCamera();
 }
 
 function updateCamera() {
