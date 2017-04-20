@@ -227,32 +227,30 @@ function drawCuboids() {
                 material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
                 break;
             case PHONG_SHADING:
-                material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+                // material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
 
-                // material = new THREE.ShaderMaterial({
-                //     defines: {
-                //         // USE_COLOR: 1
-                //     },
-                //     uniforms: {
-                //         "halfWidth": {
-                //             value: GRID_WIDTH / 2
-                //         },
-                //         "faceColor": {
-                //             // value: new THREE.Vector3(0, 0, 0)
-                //             value: new THREE.Vector3(Math.random(), Math.random(), Math.random())
-                //         }
-                //     },
-                //     // attributes: {
-                //     //     // faceColor: new THREE.Vector3(Math.random(), Math.random(), Math.random())
-                //     //
-                //     // },
-                //     vertexColors: THREE.FaceColors,
-                //     vertexShader: GouraudVertexShader,
-                //     fragmentShader: GouraudFragmentShader
+                // GradientShading
+                material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        "width": {
+                            value: GRID_WIDTH + 0.001
+                        },
+                        "faceColor": {
+                            value: new THREE.Color(Math.random(), Math.random(), Math.random())
+                        },
+                        "doublePi": {
+                            value: 2*Math.acos(-1.0)
+                        }
+                    },
+                    defines: {
+                        TURBULENCE_COEFF: 0.05 + 0.001
+                    },
+                    vertexColors: THREE.FaceColors,
+                    vertexShader: GradientVertexShader,
+                    fragmentShader: GradientFragmentShader
+                });
+
                 //
-                // });
-
-
 
 
 
@@ -344,6 +342,7 @@ function updateLight() {
         var point = new THREE.PointLight(color, intensity, distance, decay);
         var positionVec3 = gridPosition.setPosition(item[0], item[1], item[2]).getVector3();
         point.position.copy(positionVec3);
+        // for TypedArray Attribute Buffer
         POINT_LIGHT_POSITIONS.CPUArrayBuffer.push(positionVec3.x, positionVec3.y, positionVec3.z);
 
         light.add(point);
@@ -351,11 +350,13 @@ function updateLight() {
         light.add(point_helper);
     });
 
+    // create a TypedArray Attribute Buffer in CPU
     POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new THREE.Float32BufferAttribute(POINT_LIGHT_POSITIONS.CPUArrayBuffer,
         3);
 
     scene.add(light);
 }
+
 
 var LOOKING_AT_POSITION = new THREE.Vector3(0, 0, 0);
 
