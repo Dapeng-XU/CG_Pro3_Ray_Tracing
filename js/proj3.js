@@ -229,26 +229,38 @@ function drawCuboids() {
             case PHONG_SHADING:
                 // material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
 
-                // GradientShading
+                // OneColorShading
                 material = new THREE.ShaderMaterial({
                     uniforms: {
-                        "width": {
-                            value: GRID_WIDTH + 0.001
-                        },
                         "faceColor": {
                             value: new THREE.Color(Math.random(), Math.random(), Math.random())
-                        },
-                        "doublePi": {
-                            value: 2*Math.acos(-1.0)
                         }
                     },
-                    defines: {
-                        TURBULENCE_COEFF: 0.05 + 0.001
-                    },
                     vertexColors: THREE.FaceColors,
-                    vertexShader: GradientVertexShader,
-                    fragmentShader: GradientFragmentShader
+                    vertexShader: OneColorVertexShader,
+                    fragmentShader: OneColorFragmentShader
                 });
+
+                // SimpleGradientShading
+                // material = new THREE.ShaderMaterial({
+                //     uniforms: {
+                //         "width": {
+                //             value: GRID_WIDTH + 0.001
+                //         },
+                //         "faceColor": {
+                //             value: new THREE.Color(Math.random(), Math.random(), Math.random())
+                //         },
+                //         "doublePi": {
+                //             value: 2*Math.acos(-1.0)
+                //         }
+                //     },
+                //     defines: {
+                //         TURBULENCE_COEFF: 0.05 + 0.001
+                //     },
+                //     vertexColors: THREE.FaceColors,
+                //     vertexShader: SimpleGradientVertexShader,
+                //     fragmentShader: SimpleGradientFragmentShader
+                // });
 
                 //
 

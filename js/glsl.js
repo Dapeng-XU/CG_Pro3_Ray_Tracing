@@ -2,7 +2,22 @@
  * Created by 40637 on 2017/4/13.
  */
 
-var GradientVertexShader = [
+var OneColorVertexShader = [
+    'void main(void) {',
+    '   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+    '}'
+].join('\n');
+
+var OneColorFragmentShader = [
+    'precision highp float;',
+    'uniform vec3 faceColor;',
+    '',
+    'void main(void) {',
+    '   gl_FragColor = vec4(faceColor, 1.0);',
+    '}'
+].join('\n');
+
+var SimpleGradientVertexShader = [
     'uniform float width;',
     'uniform float doublePi;',
     'varying vec3 turbulence;',
@@ -13,7 +28,7 @@ var GradientVertexShader = [
     '}'
 ].join('\n');
 
-var GradientFragmentShader = [
+var SimpleGradientFragmentShader = [
     'precision highp float;',
     'uniform vec3 faceColor;',
     'varying vec3 turbulence;',
