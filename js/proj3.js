@@ -201,12 +201,12 @@ var CUBOIDS_POSITIONS = [
     [0,0,0],
     [1,0,-1],
     [1,0,1],
-    [0,2,0],
+    [0,2,0]/*,
     [0,1,1],
     [1,1,-2],
     [1,2,-3],
     [1,1,0],
-    [1,1,2]
+    [1,1,2]*/
 ];
 var CUBOIDS_SEGMENTS = 1;
 
@@ -227,30 +227,30 @@ function drawCuboids() {
                 material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
                 break;
             case PHONG_SHADING:
-                // material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+                material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
 
-                material = new THREE.ShaderMaterial({
-                    defines: {
-                        // USE_COLOR: 1
-                    },
-                    uniforms: {
-                        "halfWidth": {
-                            value: GRID_WIDTH / 2
-                        },
-                        "faceColor": {
-                            // value: new THREE.Vector3(0, 0, 0)
-                            value: new THREE.Vector3(Math.random(), Math.random(), Math.random())
-                        }
-                    },
-                    // attributes: {
-                    //     // faceColor: new THREE.Vector3(Math.random(), Math.random(), Math.random())
-                    //
-                    // },
-                    vertexColors: THREE.FaceColors,
-                    vertexShader: cuboidsVertexShader,
-                    fragmentShader: cuboidsFragmentShader
-
-                });
+                // material = new THREE.ShaderMaterial({
+                //     defines: {
+                //         // USE_COLOR: 1
+                //     },
+                //     uniforms: {
+                //         "halfWidth": {
+                //             value: GRID_WIDTH / 2
+                //         },
+                //         "faceColor": {
+                //             // value: new THREE.Vector3(0, 0, 0)
+                //             value: new THREE.Vector3(Math.random(), Math.random(), Math.random())
+                //         }
+                //     },
+                //     // attributes: {
+                //     //     // faceColor: new THREE.Vector3(Math.random(), Math.random(), Math.random())
+                //     //
+                //     // },
+                //     vertexColors: THREE.FaceColors,
+                //     vertexShader: GouraudVertexShader,
+                //     fragmentShader: GouraudFragmentShader
+                //
+                // });
 
 
 
@@ -273,7 +273,12 @@ function drawCuboids() {
 
 var SPHERES_POSITIONS = [
     [4,0,2],
-    [2,0,4]
+    [2,0,4],
+    [-2,0,-2],
+    [3,0,-3],
+    [2,2,1]/*,
+    [1,0,2],
+    [1,2,0]*/
 ];
 
 // drawCuboids(): According to the positions defined in CUBOIDS_POSITIONS,
@@ -306,13 +311,18 @@ function drawSpheres() {
 
 
 
-var POINT_LIGHT_POSITIONS = [
-    [1,0,0],
-    [1,0,-3],
-    [1,0,2],
-    [10,2,0],
-    [-10,2,0]
-];
+var POINT_LIGHT_POSITIONS = {
+    readable: [
+        [1,0,0],
+        [1,0,-3],
+        [1,0,2]/*,
+        [10,2,0],
+        [-10,2,0]*/
+    ],
+    CPUArrayBuffer: [],
+    CPUTypedArrayBuffer: new Float32Array(),
+    GPUBuffer: null
+};
 
 // updateLight(): Add the ambient light, the point lights, and even the rectangle lights.
 // According to the positions defined in POINT_LIGHT_POSITIONS,
@@ -320,29 +330,29 @@ var POINT_LIGHT_POSITIONS = [
 function updateLight() {
     // Parameters for the light sources.
     var color = 0xffffff;
-    var intensity = 0.75;
+    var intensity = 0.6;
     var distance = 10000;
     var decay = 2;
 
     var light = new THREE.Group();
     light.add(new THREE.AmbientLight(0xffffff, 0.25));
+    POINT_LIGHT_POSITIONS.CPUArrayBuffer = [];
+    POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new Float32Array();
 
     var gridPosition = new GridPosition(0,0,0);
-    POINT_LIGHT_POSITIONS.forEach(function(item) {
+    POINT_LIGHT_POSITIONS.readable.forEach(function(item) {
         var point = new THREE.PointLight(color, intensity, distance, decay);
-        point.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
+        var positionVec3 = gridPosition.setPosition(item[0], item[1], item[2]).getVector3();
+        point.position.copy(positionVec3);
+        POINT_LIGHT_POSITIONS.CPUArrayBuffer.push(positionVec3.x, positionVec3.y, positionVec3.z);
+
         light.add(point);
         var point_helper = new THREE.PointLightHelper(point, 25);
         light.add(point_helper);
     });
 
-    // function RectAreaLight ( color, intensity, width, height )
-    // var rect = new THREE.RectAreaLight(color, intensity, 100, 100);
-    // rect.position.copy(position);
-    // var rect_helper = new THREE.RectAreaLightHelper(rect);
-    // rect_helper.position.copy(position);
-    // light.add(rect);
-    // light.add(rect_helper);
+    POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new THREE.Float32BufferAttribute(POINT_LIGHT_POSITIONS.CPUArrayBuffer,
+        3);
 
     scene.add(light);
 }
