@@ -230,42 +230,15 @@ function drawCuboids() {
                 // material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
 
                 // OneColorShading
-                material = new THREE.ShaderMaterial({
-                    uniforms: {
-                        "faceColor": {
-                            value: new THREE.Color(Math.random(), Math.random(), Math.random())
-                        }
-                    },
-                    vertexColors: THREE.FaceColors,
-                    vertexShader: OneColorVertexShader,
-                    fragmentShader: OneColorFragmentShader
-                });
+                // material = OneColorShadingMaterial();
 
                 // SimpleGradientShading
-                // material = new THREE.ShaderMaterial({
-                //     uniforms: {
-                //         "width": {
-                //             value: GRID_WIDTH + 0.001
-                //         },
-                //         "faceColor": {
-                //             value: new THREE.Color(Math.random(), Math.random(), Math.random())
-                //         },
-                //         "doublePi": {
-                //             value: 2*Math.acos(-1.0)
-                //         }
-                //     },
-                //     defines: {
-                //         TURBULENCE_COEFF: 0.05 + 0.001
-                //     },
-                //     vertexColors: THREE.FaceColors,
-                //     vertexShader: SimpleGradientVertexShader,
-                //     fragmentShader: SimpleGradientFragmentShader
-                // });
+                // material = SimpleGradientShadingMaterial(0.05);
 
-                //
-
-
-
+                // PhongShading
+                var lightGridPos = new GridPosition(1,0,0);
+                material = PhongShadingMaterial(lightGridPos, PhongParameter.a, PhongParameter.d,
+                    PhongParameter.s, PhongParameter.alpha);
 
 
                 break;
@@ -307,7 +280,12 @@ function drawSpheres() {
                 material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
                 break;
             case PHONG_SHADING:
-                material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+                // material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+
+                var lightGridPos = new GridPosition(1,0,0);
+                material = PhongShadingMaterial(lightGridPos, PhongParameter.a, PhongParameter.d,
+                    PhongParameter.s, PhongParameter.alpha);
+
                 break;
         }
         var cuboid = new THREE.Mesh(geometry, material);
@@ -323,9 +301,9 @@ function drawSpheres() {
 
 var POINT_LIGHT_POSITIONS = {
     readable: [
-        [1,0,0],
+        [1,0,0]/*,
         [1,0,-3],
-        [1,0,2]/*,
+        [1,0,2]*//*,
         [10,2,0],
         [-10,2,0]*/
     ],
@@ -365,6 +343,7 @@ function updateLight() {
     // create a TypedArray Attribute Buffer in CPU
     POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new THREE.Float32BufferAttribute(POINT_LIGHT_POSITIONS.CPUArrayBuffer,
         3);
+    POINT_LIGHT_POSITIONS.GPUBuffer = new THREE.BufferAttribute(POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer);
 
     scene.add(light);
 }
