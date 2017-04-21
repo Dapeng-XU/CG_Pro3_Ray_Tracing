@@ -71,7 +71,7 @@ document.body.onkeyup = function (event) {
 
 
 var CUSTOM_SHADING = {
-    choice: 3,
+    choice: 4,
     type: {
         BUILTIN: 0,
         ONECOLOR: 1,
@@ -258,6 +258,8 @@ function drawCuboids() {
 
     var geometry = new THREE.BoxBufferGeometry(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH,
         CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS);
+    geometry.addAttribute('lightPos', POINT_LIGHT_POSITIONS.GPUBuffer);
+
     var gridPosition = new GridPosition(0,0,0);
     CUBOIDS_POSITIONS.forEach(function(item) {
         var material;
@@ -298,6 +300,7 @@ function drawSpheres() {
     var cuboids = new THREE.Group();
 
     var geometry = new THREE.SphereBufferGeometry(GRID_WIDTH / 2);
+    geometry.addAttribute('lightPos', POINT_LIGHT_POSITIONS.GPUBuffer);
     var gridPosition = new GridPosition(0,0,0);
     SPHERES_POSITIONS.forEach(function(item) {
         var material;
