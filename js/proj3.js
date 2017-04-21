@@ -133,6 +133,7 @@ function initGraphics() {
     }
     renderer.sortObjects = false;
 
+    prepareLightBufferAttributes();
     switchShading();
     drawCheckerboard();
     drawCuboids();
@@ -240,12 +241,12 @@ var CUBOIDS_POSITIONS = [
     [0,0,0],
     [1,0,-1],
     [1,0,1],
-    [0,2,0]/*,
+    [0,2,0],
     [0,1,1],
     [1,1,-2],
     [1,2,-3],
     [1,1,0],
-    [1,1,2]*/
+    [1,1,2]
 ];
 var CUBOIDS_SEGMENTS = 1;
 
@@ -266,9 +267,7 @@ function drawCuboids() {
                 material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
                 break;
             case PHONG_SHADING:
-
                 material = chooseShading();
-
                 break;
         }
         var cuboid = new THREE.Mesh(geometry, material);
@@ -287,9 +286,9 @@ var SPHERES_POSITIONS = [
     [2,0,4],
     [-2,0,-2],
     [3,0,-3],
-    [2,2,1]/*,
+    [2,2,1],
     [1,0,2],
-    [1,2,0]*/
+    [1,2,0]
 ];
 
 // drawCuboids(): According to the positions defined in CUBOIDS_POSITIONS,
@@ -308,9 +307,7 @@ function drawSpheres() {
                 material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
                 break;
             case PHONG_SHADING:
-
                 material = chooseShading();
-
                 break;
         }
         var cuboid = new THREE.Mesh(geometry, material);
@@ -332,15 +329,30 @@ var POINT_LIGHT_POSITIONS = {
         [10,2,0],
         [-10,2,0]*/
     ],
-    CPUArrayBuffer: [],
     CPUTypedArrayBuffer: new Float32Array(),
     GPUBuffer: null
 };
+
+function prepareLightBufferAttributes() {
+    "use strict";
+    var OneArray = [];
+    POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new Float32Array();
+    var gridPos = new GridPosition(0,0,0);
+    var posVec = new THREE.Vector3(0,0,0);
+    POINT_LIGHT_POSITIONS.readable.forEach(function (item) {
+        posVec.copy(gridPos.setPosition(item[0], item[1], item[2]).getVector3());
+        OneArray.push(posVec.x, posVec.y, posVec.z);
+    });
+    // create a TypedArray Attribute Buffer in CPU
+    POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new THREE.Float32BufferAttribute(OneArray, 3);
+    POINT_LIGHT_POSITIONS.GPUBuffer = new THREE.BufferAttribute(POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer, 3);
+}
 
 // updateLight(): Add the ambient light, the point lights, and even the rectangle lights.
 // According to the positions defined in POINT_LIGHT_POSITIONS,
 // creates the point lights in the scene.
 function updateLight() {
+    "use strict";
     // Parameters for the light sources.
     var color = 0xffffff;
     var intensity = 0.6;
@@ -349,26 +361,15 @@ function updateLight() {
 
     var light = new THREE.Group();
     light.add(new THREE.AmbientLight(0xffffff, 0.25));
-    POINT_LIGHT_POSITIONS.CPUArrayBuffer = [];
-    POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new Float32Array();
 
     var gridPosition = new GridPosition(0,0,0);
     POINT_LIGHT_POSITIONS.readable.forEach(function(item) {
         var point = new THREE.PointLight(color, intensity, distance, decay);
-        var positionVec3 = gridPosition.setPosition(item[0], item[1], item[2]).getVector3();
-        point.position.copy(positionVec3);
-        // for TypedArray Attribute Buffer
-        POINT_LIGHT_POSITIONS.CPUArrayBuffer.push(positionVec3.x, positionVec3.y, positionVec3.z);
-
+        point.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
         light.add(point);
         var point_helper = new THREE.PointLightHelper(point, 25);
         light.add(point_helper);
     });
-
-    // create a TypedArray Attribute Buffer in CPU
-    POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new THREE.Float32BufferAttribute(POINT_LIGHT_POSITIONS.CPUArrayBuffer,
-        3);
-    POINT_LIGHT_POSITIONS.GPUBuffer = new THREE.BufferAttribute(POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer);
 
     scene.add(light);
 }

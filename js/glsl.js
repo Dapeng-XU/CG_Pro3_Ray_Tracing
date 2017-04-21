@@ -95,6 +95,7 @@ var MatrixTransposeFunction = [
 ].join('\n');
 
 var PhongVertexShader = [
+    // 'ws' means the world space.
     'uniform vec3 lightPosition;',
     'varying vec3 wsInterpolatedView;',
     'varying vec3 wsInterpolatedNormal;',
@@ -133,9 +134,9 @@ var PhongFragmentShader = [
     '   vec3 wsReflect = 2.0 * dot_light_normal * wsNormal - wsLight;',
     '   if (dot_light_normal > 0.0) {',
     '       vec3 diffuse = k_values.y * dot_light_normal * diffuseColor;',
-    '   vec3 specular = k_values.z * pow( max(dot(wsReflect, wsView), 0.0) , k_values.w )', /* * pow(, k_values.w)*/
+    '       vec3 specular = k_values.z * pow( max(dot(wsReflect, wsView), 0.0) , k_values.w )', /* * pow(, k_values.w)*/
     '         * specularColor;', /*/ pow(length(wsInterpolatedLight), 0.9)*/
-    '   gl_FragColor = vec4( (ambient + diffuse + specular) , 1.0);',
+    '       gl_FragColor = vec4( (ambient + diffuse + specular) , 1.0);',
     '   } else {', // color mix
     '       gl_FragColor = vec4( ambient, 1.0);',
     '   }',
@@ -201,8 +202,8 @@ var GouraudFragmentShader = [
 
 function GouraudShadingMaterial(gridLightPos, diffuse) {
     "use strict";
-    var lightColor = new THREE.Color(Math.random(), Math.random(), Math.random());
-    var diffuseColor = lightColor.multiplyScalar(0.75);
+    var lightColor = new THREE.Color(1.0,1.0,1.0);
+    var diffuseColor = (new THREE.Color(Math.random(), Math.random(), Math.random())).multiplyScalar(0.75);
     return new THREE.ShaderMaterial({
         uniforms: {
             "lightPosition": {
