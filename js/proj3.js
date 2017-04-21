@@ -68,6 +68,45 @@ document.body.onkeyup = function (event) {
     }
 };
 
+
+
+var CUSTOM_SHADING = {
+    choice: 3,
+    type: {
+        BUILTIN: 0,
+        ONECOLOR: 1,
+        SIMPLEGRADIENT: 2,
+        GOURAUD: 3,
+        PHONG: 4
+    }
+};
+function chooseShading() {
+    "use strict";
+    var material;
+    // PhongShading and GouraudShading
+    var lightGridPos = new GridPosition(1,0,0);
+    switch (CUSTOM_SHADING.choice) {
+        case CUSTOM_SHADING.type.BUILTIN:
+            material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+            break;
+        case CUSTOM_SHADING.type.ONECOLOR:
+            material = OneColorShadingMaterial();
+            break;
+        case CUSTOM_SHADING.type.SIMPLEGRADIENT:
+            material = SimpleGradientShadingMaterial(0.05);
+            break;
+        case CUSTOM_SHADING.type.GOURAUD:
+            material = GouraudShadingMaterial(lightGridPos, 0.02);
+            break;
+        case CUSTOM_SHADING.type.PHONG:
+            material = PhongShadingMaterial(lightGridPos, 0.4, 2.0, 1.0, 100.1);
+            break;
+    }
+    return material;
+}
+
+
+
 // 初始化的图形绘制
 var scene = new THREE.Scene();
 var camera, renderer, raycaster;
@@ -227,19 +266,8 @@ function drawCuboids() {
                 material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
                 break;
             case PHONG_SHADING:
-                // material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
 
-                // OneColorShading
-                // material = OneColorShadingMaterial();
-
-                // SimpleGradientShading
-                // material = SimpleGradientShadingMaterial(0.05);
-
-                // PhongShading
-                var lightGridPos = new GridPosition(1,0,0);
-                material = PhongShadingMaterial(lightGridPos, PhongParameter.a, PhongParameter.d,
-                    PhongParameter.s, PhongParameter.alpha);
-
+                material = chooseShading();
 
                 break;
         }
@@ -280,11 +308,8 @@ function drawSpheres() {
                 material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
                 break;
             case PHONG_SHADING:
-                // material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
 
-                var lightGridPos = new GridPosition(1,0,0);
-                material = PhongShadingMaterial(lightGridPos, PhongParameter.a, PhongParameter.d,
-                    PhongParameter.s, PhongParameter.alpha);
+                material = chooseShading();
 
                 break;
         }
