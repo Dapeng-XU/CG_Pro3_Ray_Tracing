@@ -122,6 +122,7 @@ var PhongFragmentShader = [
     'varying vec3 wsInterpolatedView;',
     'varying vec3 wsInterpolatedNormal;',
     'varying vec3 wsInterpolatedLight;',
+    'attribute vec3 lightPos;',
     '',
     'void main(void) {',
     '   vec3 wsView = normalize(wsInterpolatedView);',
@@ -134,8 +135,7 @@ var PhongFragmentShader = [
     '   vec3 wsReflect = 2.0 * dot_light_normal * wsNormal - wsLight;',
     '   if (dot_light_normal > 0.0) {',
     '       vec3 diffuse = k_values.y * dot_light_normal * diffuseColor;',
-    '       vec3 specular = k_values.z * pow( max(dot(wsReflect, wsView), 0.0) , k_values.w )', /* * pow(, k_values.w)*/
-    '         * specularColor;', /*/ pow(length(wsInterpolatedLight), 0.9)*/
+    '       vec3 specular = k_values.z * pow( max(dot(wsReflect, wsView), 0.0) , k_values.w ) * specularColor;',
     '       gl_FragColor = vec4( (ambient + diffuse + specular) , 1.0);',
     '   } else {', // color mix
     '       gl_FragColor = vec4( ambient, 1.0);',

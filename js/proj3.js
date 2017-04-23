@@ -189,7 +189,7 @@ var Cuboids = {
 
         var geometry = new THREE.BoxBufferGeometry(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH,
             this.SEGMENTS, this.SEGMENTS, this.SEGMENTS);
-        // geometry.addAttribute('lightPos', Lights.POINT_LIGHT_POSITIONS.GPUBuffer);
+        geometry.addAttribute('lightPos', Lights.POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer);
 
         var gridPosition = new GridPosition(0,0,0);
         this.POSITIONS.forEach(function(item) {
@@ -220,7 +220,7 @@ var Spheres = {
         var spheres = new THREE.Group();
 
         var geometry = new THREE.SphereBufferGeometry(GRID_WIDTH / 2);
-        // geometry.addAttribute('lightPos', Lights.POINT_LIGHT_POSITIONS.GPUBuffer);
+        geometry.addAttribute('lightPos', Lights.POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer);
 
         var gridPosition = new GridPosition(0,0,0);
         this.POSITIONS.forEach(function(item) {
@@ -242,7 +242,7 @@ var Lights = {
              [10,2,0],
              [-10,2,0]*/
         ],
-        CPUTypedArrayBuffer: new Float32Array(),
+        CPUTypedArrayBuffer: null,
         GPUBuffer: null
     },
     // initialize(): create a TypedArray Attribute Buffer in CPU
@@ -257,11 +257,11 @@ var Lights = {
             OneArray.push(posVec.x, posVec.y, posVec.z);
         });
         this.POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new THREE.Float32BufferAttribute(OneArray, 3);
-        this.POINT_LIGHT_POSITIONS.GPUBuffer = new THREE.BufferAttribute(this.POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer, 3);
+        // this.POINT_LIGHT_POSITIONS.GPUBuffer = new THREE.BufferAttribute(this.POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer, 3);
     },
-    // updateLight(): Add the ambient light, the point lights, and even the rectangle lights.
+    // update(): Add the ambient light, the point lights, and even the rectangle lights.
     // According to the positions defined in POINT_LIGHT_POSITIONS, creates the point lights in the scene.
-    updateLight: function () {
+    update: function () {
         "use strict";
         // Parameters for the light sources.
         var color = 0xffffff;
@@ -399,11 +399,13 @@ var Renderer = {
         }
         this.renderer.sortObjects = false;
 
+        // Cause lights will determine how the shader do rendering, we should deal with the lights before the objects.
+        Lights.initialize();
+        Lights.update();
+
         Checkerboard.drawInScene();
         Cuboids.drawInScene();
         Spheres.drawInScene();
-        Lights.initialize();
-        Lights.updateLight();
         Camera.initialize();
 
         // 显示一个坐标轴，红色X，绿色Y，蓝色Z
