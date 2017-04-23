@@ -219,7 +219,7 @@ function GouraudShadingMaterial(gridLightPos, diffuse) {
                 value: lightColor.multiplyScalar(1.0)
             }
         },
-        vertexColors: THREE.FaceColors,
+        vertexColors: THREE.VertexColors,
         vertexShader: GouraudVertexShader,
         fragmentShader: GouraudFragmentShader
     });
