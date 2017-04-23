@@ -11,7 +11,6 @@ var DEBUG_ON_OFF = true;
 
 // 更规范的方式，定义全局变量，然后通过全局变量访问其他库中定义的函数和变量
 var THREE = window.THREE;
-var dat = window.dat;
 
 // 用于调试输出，控制div标签的id="debug_text"
 var debug_text_number = 0;
@@ -33,7 +32,7 @@ function errout(text, printTrace, stopRunning) {
         debug_text_content.shift();
     }
     var debug_text = document.getElementById('debug_text');
-    debug_text.height = canvHeight;
+    debug_text.height = window.innerHeight;
     // join也是一种数组方法，用于合成为一个字符串，并插入指定的分隔符
     debug_text.innerHTML = debug_text_content.join('<br/>');
     // 打印调用栈
@@ -107,69 +106,6 @@ function FPS() {
         window.clearInterval(FPSHandle);
     }
     FPSHandle = window.setTimeout(FPS, 1000);
-}
-
-// 画布的宽和高，涉及到绘制区域的大小，统一使用这两个变量。
-// 这两个变量在文档加载，窗口大小改变，显示左侧面板等改变画布大小的区域等情况下，都会更新。
-var canvHeight;
-var canvWidth;
-
-function canvasResize() {
-    "use strict";
-    /* 获取画布的宽和高
-     * 用jQuery.width()、jQuery.outerWidth()、document.getElementById(div_id).width获取宽高都会出问题。
-     * 但是用window.innerWidth可以取得很好的效果。
-     */
-    canvHeight = window.innerHeight;
-    canvWidth = window.innerWidth;
-    if (camera) {
-        camera.aspect = canvWidth / canvHeight;
-        camera.updateProjectionMatrix();
-    }
-    if (renderer) {
-        renderer.setSize(canvWidth, canvHeight);
-    }
-}
-
-// 重绘整个画布。除非必要，应避免对整个场景的重绘（调用这个函数）。
-function redraw() {
-    "use strict";
-    canvasResize();
-    var i;
-    // scene.children.forEach(function(item) {
-    //     scene.remove(item);
-    // });
-    var listLength = scene.children.length;
-    for (i=0;i<listLength;i++) {
-        scene.remove(scene.children[0]);
-    }
-    // 可能涉及到更复杂的问题
-    // 避免多个requestAnimationFrame()循环同时绘制图像，造成帧速率太高（远高于60FPS）
-    // 停止已有的绘制刷新循环
-    stop();
-    // 初始化新的图形绘制，绘制整个场景
-    initGraphics();
-}
-
-// 禁止用户选择文本，优化UI体验
-// 浏览器限制：仅在IE和Chrome中有效，在Firefox中无效。
-document.body.onselectstart = function () {
-    "use strict";
-    return false;
-};
-
-
-// 避免多个requestAnimationFrame()循环同时绘制图像。
-/* 对整个场景进行重绘（重新建立一个绘制，scene也重新创建）时，如果不停止已有的动画循环，即不使用下面这段代码，会造成帧速率升高
- * 的问题。这是由JavaScript的内部机制决定的。
- */
-var requestId;
-function stop() {
-    "use strict";
-    if (requestId) {
-        window.cancelAnimationFrame(requestId);
-        requestId = undefined;
-    }
 }
 
 function printMatrix4(mat4) {

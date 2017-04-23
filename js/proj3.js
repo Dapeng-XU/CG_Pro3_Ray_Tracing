@@ -2,191 +2,121 @@
  * Created by 40637 on 2017/3/22.
  */
 
-// 每次窗口的大小发生改变时，也改变画布的大小
-window.onresize = canvasResize;
+var scene = new THREE.Scene();
 
-document.body.onload = function () {
-    "use strict";
-    redraw();
+
+var CUSTOM_SHADING = {
+    // Warning: These properties shouldn't be accessed or modified outside the CUSTOM_SHADING.
+    choice: 4,
+    type: {
+        BUILT_IN_PHONG: 0,
+        BUILT_IN_GOURAUD: 1,
+        ONECOLOR: 2,
+        SIMPLEGRADIENT: 3,
+        GOURAUD: 4,
+        PHONG: 5
+    },
+    totalNumber: 6,
+
+    // Allow the user to change the shading method only after
+    SWITCH_SHADING_MINIMAL_INTERVAL: 1000,  // 1000 ms
+    isSwitching: false,
+
+    switchShading: function () {
+        "use strict";
+        var currentCUSTOM_SHADING = window.CUSTOM_SHADING;
+        if (currentCUSTOM_SHADING.isSwitching)
+            return;
+
+        currentCUSTOM_SHADING.isSwitching = true;
+        setTimeout(function() {
+            currentCUSTOM_SHADING.isSwitching = false;
+        }, currentCUSTOM_SHADING.SWITCH_SHADING_MINIMAL_INTERVAL);
+
+        currentCUSTOM_SHADING.choice = (this.choice + 1) % currentCUSTOM_SHADING.totalNumber;
+        Renderer.redraw();
+    },
+
+    getShaderMaterial: function () {
+        "use strict";
+        var material;
+        // PhongShading and GouraudShading
+        var lightGridPos = new GridPosition(1,0,0);
+        switch (CUSTOM_SHADING.choice) {
+            case CUSTOM_SHADING.type.BUILT_IN_PHONG:
+                material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
+                $("#cur-shading").html("Three.js built-in Phong shader");
+                break;
+            case CUSTOM_SHADING.type.BUILT_IN_GOURAUD:
+                material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
+                $("#cur-shading").html("Three.js built-in Gouraud shader");
+                break;
+            case CUSTOM_SHADING.type.ONECOLOR:
+                material = OneColorShadingMaterial();
+                $("#cur-shading").html("(DIY) One color shader");
+                break;
+            case CUSTOM_SHADING.type.SIMPLEGRADIENT:
+                material = SimpleGradientShadingMaterial(0.05);
+                $("#cur-shading").html("(DIY) Simple gradient shader");
+                break;
+            case CUSTOM_SHADING.type.GOURAUD:
+                material = GouraudShadingMaterial(lightGridPos, 0.01);
+                $("#cur-shading").html("(DIY) Gouraud shader");
+                break;
+            case CUSTOM_SHADING.type.PHONG:
+                material = PhongShadingMaterial(lightGridPos, 0.4, 2.0, 1.0, 10.1);
+                $("#cur-shading").html("(DIY) Phong shader");
+                break;
+        }
+        return material;
+    }
 };
 
-var GOURAUD_SHADING = 0;
-var PHONG_SHADING = 1;
-var shadingMethod = 1 - PHONG_SHADING;
-function switchShading() {
-    shadingMethod = 1 - shadingMethod;
-    var label = $("#cur-shading");
-    switch(shadingMethod) {
-        case GOURAUD_SHADING:
-            label.html('Gouraud Shading');
-            break;
-        case PHONG_SHADING:
-            label.html('Phong Shading');
-            break;
-    }
-}
-// Allow the user to change the shading method after
-var SWITCH_SHADING_MINIMAL_INTERVAL = 3000;
-var switchShadingWaitingHandle = null;
-function waitShading_Begin() {
-    switching = true;
-    switchShadingWaitingHandle = setInterval("waitShading_End()", SWITCH_SHADING_MINIMAL_INTERVAL);
-}
-function waitShading_End() {
-    window.clearInterval(switchShadingWaitingHandle);
-    switching = false;
-}
 
 var playAnimation = true;
-var switching = false;
-document.body.onkeydown = function (event) {
-    "use strict";
-    var keycode = parseInt(event.keyCode);
-    if ('A'.charCodeAt(0) <= keycode && keycode <= 'Z'.charCodeAt(0)) {
-       switch (keycode) {
-           case 'P'.charCodeAt(0):
-               playAnimation = !playAnimation;
-               errout("playAnimation = " + playAnimation);
-               break;
-       }
-    }
-};
-
 document.body.onkeyup = function (event) {
     "use strict";
     var keycode = parseInt(event.keyCode);
     if ('A'.charCodeAt(0) <= keycode && keycode <= 'Z'.charCodeAt(0)) {
         switch (keycode) {
+            case 'P'.charCodeAt(0):
+                playAnimation = !playAnimation;
+                errout("playAnimation = " + playAnimation);
+                break;
             case 'S'.charCodeAt(0):
-                if (!switching) {
-                    waitShading_Begin();
-                    switchShading();
-                    redraw();
-                }
+                CUSTOM_SHADING.switchShading();
                 break;
         }
     }
 };
 
 
-
-var CUSTOM_SHADING = {
-    choice: 4,
-    type: {
-        BUILTIN: 0,
-        ONECOLOR: 1,
-        SIMPLEGRADIENT: 2,
-        GOURAUD: 3,
-        PHONG: 4
+var Checkerboard = {
+    LENGTH_OF_ONE_BRICK: 100,
+    NUMBERS_ALONG_HALF_EDGE: 15,
+    drawInScene: function() {
+        "use strict";
+        var checkerboard = new THREE.Group();
+        var geometry = new THREE.PlaneBufferGeometry( this.LENGTH_OF_ONE_BRICK, this.LENGTH_OF_ONE_BRICK );
+        for (var i = -this.NUMBERS_ALONG_HALF_EDGE; i < this.NUMBERS_ALONG_HALF_EDGE; i++) {
+            for (var j = -this.NUMBERS_ALONG_HALF_EDGE; j < this.NUMBERS_ALONG_HALF_EDGE; j++) {
+                var material;
+                // The color attribute of the material must be assigned in the constructor parameters.
+                if ( (i + j) % 2 === 0 ) {
+                    material = new THREE.MeshPhongMaterial( {color: 0xeeeeee, side: THREE.BackSide} );
+                } else {
+                    material = new THREE.MeshPhongMaterial( {color: 0x111111, specular: 0x111111, side: THREE.BackSide} );
+                }
+                var plane = new THREE.Mesh( geometry, material );
+                plane.translateX(i * this.LENGTH_OF_ONE_BRICK);
+                plane.translateZ(j * this.LENGTH_OF_ONE_BRICK);
+                plane.rotateX(Math.PI / 2);
+                checkerboard.add( plane );
+            }
+        }
+        scene.add(checkerboard);
     }
 };
-function chooseShading() {
-    "use strict";
-    var material;
-    // PhongShading and GouraudShading
-    var lightGridPos = new GridPosition(1,0,0);
-    switch (CUSTOM_SHADING.choice) {
-        case CUSTOM_SHADING.type.BUILTIN:
-            material = new THREE.MeshPhongMaterial({color: getRandColor(), side: THREE.FrontSide});
-            break;
-        case CUSTOM_SHADING.type.ONECOLOR:
-            material = OneColorShadingMaterial();
-            break;
-        case CUSTOM_SHADING.type.SIMPLEGRADIENT:
-            material = SimpleGradientShadingMaterial(0.05);
-            break;
-        case CUSTOM_SHADING.type.GOURAUD:
-            material = GouraudShadingMaterial(lightGridPos, 0.02);
-            break;
-        case CUSTOM_SHADING.type.PHONG:
-            material = PhongShadingMaterial(lightGridPos, 0.4, 2.0, 1.0, 100.1);
-            break;
-    }
-    return material;
-}
-
-
-
-// 初始化的图形绘制
-var scene = new THREE.Scene();
-var camera, renderer, raycaster;
-var canv = document.getElementById('canvas');
-// 默认背景色
-var DEFAULT_BACKGROUND_COLOR = 0x444444;
-function initGraphics() {
-    "use strict";
-
-    // Three.js的三要素：场景、相机、渲染器。
-    // 相机的初始化代码提到后面了
-    // 初始化渲染器为使用WebGL的绑定到ID为“canvas”的元素，参数使用JSON表示。
-    renderer = new THREE.WebGLRenderer({
-        canvas: canv
-    });
-
-    // 重设渲染器的大小为窗口大小；否则，默认的渲染大小很小，在屏幕上显示出大的块状。
-    // setSize()同时会改变画布大小
-    renderer.setSize(canvWidth, canvHeight);
-    // 设置画布默认的背景色
-    renderer.setClearColor(DEFAULT_BACKGROUND_COLOR);
-    if (window.devicePixelRatio) {
-        renderer.setPixelRatio(window.devicePixelRatio);
-    }
-    renderer.sortObjects = false;
-
-    prepareLightBufferAttributes();
-    switchShading();
-    drawCheckerboard();
-    drawCuboids();
-    drawSpheres();
-
-    // 显示一个坐标轴，红色X，绿色Y，蓝色Z
-    var axisHelper = new THREE.AxisHelper(2000);
-    scene.add(axisHelper);
-
-    updateLight();
-    launchDefaultCamera();
-    animate();
-    FPS();
-
-    render();
-}
-
-var CHECKERBOARD_LENGTH = 100;
-var CHECKERBOARDS_ALONG_HALF_EDGE = 15;
-function drawCheckerboard() {
-    "use strict";
-    var checkerboard = new THREE.Group();
-    for (var i = -CHECKERBOARDS_ALONG_HALF_EDGE; i < CHECKERBOARDS_ALONG_HALF_EDGE; i++) {
-        for (var j = -CHECKERBOARDS_ALONG_HALF_EDGE; j < CHECKERBOARDS_ALONG_HALF_EDGE; j++) {
-            var geometry = new THREE.PlaneBufferGeometry( CHECKERBOARD_LENGTH, CHECKERBOARD_LENGTH );
-            var material;
-            // The color attribute of the material must be assigned in the constructor parameters.
-            switch (shadingMethod) {
-                case GOURAUD_SHADING:
-                    if ( (i + j) % 2 === 0 ) {
-                        material = new THREE.MeshLambertMaterial( {color: 0xeeeeee, side: THREE.BackSide} );
-                    } else {
-                        material = new THREE.MeshLambertMaterial( {specular: 0x111111, side: THREE.BackSide} );
-                    }
-                    break;
-                case PHONG_SHADING:
-                    if ( (i + j) % 2 === 0 ) {
-                        material = new THREE.MeshPhongMaterial( {color: 0xeeeeee, side: THREE.BackSide} );
-                    } else {
-                        material = new THREE.MeshPhongMaterial( {specular: 0x111111, side: THREE.BackSide} );
-                    }
-                    break;
-            }
-            var plane = new THREE.Mesh( geometry, material );
-            plane.translateX(i * CHECKERBOARD_LENGTH);
-            plane.translateZ(j * CHECKERBOARD_LENGTH);
-            plane.rotateX(Math.PI / 2);
-            //plane.matrixAutoUpdate = false;
-            checkerboard.add( plane );
-        }
-    }
-    scene.add(checkerboard);
-}
 
 
 // GridPosition(): Generate the position in a fixed grid by a triple(nx, ny, nz).
@@ -237,222 +167,270 @@ GridPosition.prototype.setLength(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH);
 
 
 
-var CUBOIDS_POSITIONS = [
-    [0,0,0],
-    [1,0,-1],
-    [1,0,1],
-    [0,2,0],
-    [0,1,1],
-    [1,1,-2],
-    [1,2,-3],
-    [1,1,0],
-    [1,1,2]
-];
-var CUBOIDS_SEGMENTS = 1;
-
-// drawCuboids(): According to the positions defined in CUBOIDS_POSITIONS,
-// creates the cuboids in the scene.
-function drawCuboids() {
-    "use strict";
-    var cuboids = new THREE.Group();
-
-    var geometry = new THREE.BoxBufferGeometry(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH,
-        CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS, CUBOIDS_SEGMENTS);
-    geometry.addAttribute('lightPos', POINT_LIGHT_POSITIONS.GPUBuffer);
-
-    var gridPosition = new GridPosition(0,0,0);
-    CUBOIDS_POSITIONS.forEach(function(item) {
-        var material;
-        // The color attribute of the material must be assigned in the constructor parameters.
-        switch (shadingMethod) {
-            case GOURAUD_SHADING:
-                material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
-                break;
-            case PHONG_SHADING:
-                material = chooseShading();
-                break;
-        }
-        var cuboid = new THREE.Mesh(geometry, material);
-        cuboid.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
-        cuboid.matrixAutoUpdate = true;
-        cuboids.add(cuboid);
-    });
-
-    scene.add(cuboids);
-}
-
-
-
-var SPHERES_POSITIONS = [
-    [4,0,2],
-    [2,0,4],
-    [-2,0,-2],
-    [3,0,-3],
-    [2,2,1],
-    [1,0,2],
-    [1,2,0]
-];
-
-// drawCuboids(): According to the positions defined in CUBOIDS_POSITIONS,
-// creates the cuboids in the scene.
-function drawSpheres() {
-    "use strict";
-    var cuboids = new THREE.Group();
-
-    var geometry = new THREE.SphereBufferGeometry(GRID_WIDTH / 2);
-    geometry.addAttribute('lightPos', POINT_LIGHT_POSITIONS.GPUBuffer);
-    var gridPosition = new GridPosition(0,0,0);
-    SPHERES_POSITIONS.forEach(function(item) {
-        var material;
-        // The color attribute of the material must be assigned in the constructor parameters.
-        switch (shadingMethod) {
-            case GOURAUD_SHADING:
-                material = new THREE.MeshLambertMaterial({color: getRandColor(), side: THREE.FrontSide});
-                break;
-            case PHONG_SHADING:
-                material = chooseShading();
-                break;
-        }
-        var cuboid = new THREE.Mesh(geometry, material);
-        cuboid.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
-        cuboid.matrixAutoUpdate = true;
-        cuboids.add(cuboid);
-    });
-
-    scene.add(cuboids);
-}
-
-
-
-var POINT_LIGHT_POSITIONS = {
-    readable: [
-        [1,0,0]/*,
-        [1,0,-3],
-        [1,0,2]*//*,
-        [10,2,0],
-        [-10,2,0]*/
+var Cuboids = {
+    POSITIONS: [
+        [0,0,0],
+        [1,0,-1],
+        [1,0,1],
+        [0,2,0],
+        [0,1,1],
+        [1,1,-2],
+        [1,2,-3],
+        [1,1,0],
+        [1,1,2]
     ],
-    CPUTypedArrayBuffer: new Float32Array(),
-    GPUBuffer: null
+    SEGMENTS: 1,
+
+    // drawCuboids(): According to the positions defined in CUBOIDS_POSITIONS,
+    // creates the cuboids in the scene.
+    drawInScene: function () {
+        "use strict";
+        var cuboids = new THREE.Group();
+
+        var geometry = new THREE.BoxBufferGeometry(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH,
+            this.SEGMENTS, this.SEGMENTS, this.SEGMENTS);
+        // geometry.addAttribute('lightPos', Lights.POINT_LIGHT_POSITIONS.GPUBuffer);
+
+        var gridPosition = new GridPosition(0,0,0);
+        this.POSITIONS.forEach(function(item) {
+            var cuboid = new THREE.Mesh(geometry, CUSTOM_SHADING.getShaderMaterial());
+            cuboid.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
+            cuboids.add(cuboid);
+        });
+
+        scene.add(cuboids);
+    }
 };
 
-function prepareLightBufferAttributes() {
-    "use strict";
-    var OneArray = [];
-    POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new Float32Array();
-    var gridPos = new GridPosition(0,0,0);
-    var posVec = new THREE.Vector3(0,0,0);
-    POINT_LIGHT_POSITIONS.readable.forEach(function (item) {
-        posVec.copy(gridPos.setPosition(item[0], item[1], item[2]).getVector3());
-        OneArray.push(posVec.x, posVec.y, posVec.z);
-    });
-    // create a TypedArray Attribute Buffer in CPU
-    POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new THREE.Float32BufferAttribute(OneArray, 3);
-    POINT_LIGHT_POSITIONS.GPUBuffer = new THREE.BufferAttribute(POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer, 3);
-}
+var Spheres = {
+    POSITIONS: [
+        [4,0,2],
+        [2,0,4],
+        [-2,0,-2],
+        [3,0,-3],
+        [2,2,1],
+        [1,0,2],
+        [1,2,0]
+    ],
 
-// updateLight(): Add the ambient light, the point lights, and even the rectangle lights.
-// According to the positions defined in POINT_LIGHT_POSITIONS,
-// creates the point lights in the scene.
-function updateLight() {
-    "use strict";
-    // Parameters for the light sources.
-    var color = 0xffffff;
-    var intensity = 0.6;
-    var distance = 10000;
-    var decay = 2;
+    // drawCuboids(): According to the positions defined in CUBOIDS_POSITIONS,
+    // creates the cuboids in the scene.
+    drawInScene: function () {
+        "use strict";
+        var spheres = new THREE.Group();
 
-    var light = new THREE.Group();
-    light.add(new THREE.AmbientLight(0xffffff, 0.25));
+        var geometry = new THREE.SphereBufferGeometry(GRID_WIDTH / 2);
+        // geometry.addAttribute('lightPos', Lights.POINT_LIGHT_POSITIONS.GPUBuffer);
 
-    var gridPosition = new GridPosition(0,0,0);
-    POINT_LIGHT_POSITIONS.readable.forEach(function(item) {
-        var point = new THREE.PointLight(color, intensity, distance, decay);
-        point.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
-        light.add(point);
-        var point_helper = new THREE.PointLightHelper(point, 25);
-        light.add(point_helper);
-    });
+        var gridPosition = new GridPosition(0,0,0);
+        this.POSITIONS.forEach(function(item) {
+            var sphere = new THREE.Mesh(geometry, CUSTOM_SHADING.getShaderMaterial());
+            sphere.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
+            spheres.add(sphere);
+        });
 
-    scene.add(light);
-}
+        scene.add(spheres);
+    }
+};
 
+var Lights = {
+    POINT_LIGHT_POSITIONS: {
+        readable: [
+            [1,0,0]/*,
+             [1,0,-3],
+             [1,0,2]*//*,
+             [10,2,0],
+             [-10,2,0]*/
+        ],
+        CPUTypedArrayBuffer: new Float32Array(),
+        GPUBuffer: null
+    },
+    // initialize(): create a TypedArray Attribute Buffer in CPU
+    initialize: function () {
+        "use strict";
+        var OneArray = [];
+        this.POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new Float32Array();
+        var gridPos = new GridPosition(0,0,0);
+        var posVec = new THREE.Vector3(0,0,0);
+        this.POINT_LIGHT_POSITIONS.readable.forEach(function (item) {
+            posVec.copy(gridPos.setPosition(item[0], item[1], item[2]).getVector3());
+            OneArray.push(posVec.x, posVec.y, posVec.z);
+        });
+        this.POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer = new THREE.Float32BufferAttribute(OneArray, 3);
+        this.POINT_LIGHT_POSITIONS.GPUBuffer = new THREE.BufferAttribute(this.POINT_LIGHT_POSITIONS.CPUTypedArrayBuffer, 3);
+    },
+    // updateLight(): Add the ambient light, the point lights, and even the rectangle lights.
+    // According to the positions defined in POINT_LIGHT_POSITIONS, creates the point lights in the scene.
+    updateLight: function () {
+        "use strict";
+        // Parameters for the light sources.
+        var color = 0xffffff;
+        var intensity = 0.6;
+        var distance = 10000;
+        var decay = 2;
 
-var LOOKING_AT_POSITION = new THREE.Vector3(0, 0, 0);
+        var light = new THREE.Group();
+        light.add(new THREE.AmbientLight(0xffffff, 0.25));
 
-function launchDefaultCamera() {
-    camera = new THREE.PerspectiveCamera(40, canvWidth / canvHeight, 0.1, 10000);
-    // cPosition = new THREE.Vector3(10,10,10);
-    var one = 300;
-    camera.position.x = one;
-    camera.position.y = one;
-    camera.position.z = one;
-    updateCamera();
-}
+        var gridPosition = new GridPosition(0,0,0);
+        this.POINT_LIGHT_POSITIONS.readable.forEach(function(item) {
+            var point = new THREE.PointLight(color, intensity, distance, decay);
+            point.position.copy(gridPosition.setPosition(item[0], item[1], item[2]).getVector3());
+            light.add(point);
+            var point_helper = new THREE.PointLightHelper(point, 25);
+            light.add(point_helper);
+        });
 
-function updateCamera() {
-    "use strict";
-    camera.lookAt(LOOKING_AT_POSITION);
-    camera.updateMatrixWorld();
-}
+        scene.add(light);
+    }
+};
 
-// the speed of camera animation
-var INCREASING_UNIT = 0.25;
+var Camera = {
+    camera: null,
+    LOOKING_AT_POSITION: new THREE.Vector3(0, 0, 0),
+    initialize: function() {
+        "use strict";
+        var one = 300;
+        this.camera.position.copy(new THREE.Vector3(one, one, one));
+        this.update();
+    },
+    update: function() {
+        "use strict";
+        this.camera.lookAt(this.LOOKING_AT_POSITION);
+        this.camera.updateMatrixWorld();
+    }
+};
 
 var cameraEllipseAnimate = {
+    // INCREASING_UNIT: the speed of camera animation
+    INCREASING_UNIT: 0.25,
     theta : 0.0,
-    xa : 720,
-    zb : 720,
-    yc : 200,
-    center_x: 0,
-    center_y: 0,
-    x : function () {
-        return this.xa * Math.cos(this.theta);
-    },
-    y : function () {
-        // return 1200 + ( (this.theta >= 0) ? (-this.yc*2/Math.PI*(this.theta - Math.PI/2)) :
-        //     (this.yc*2/Math.PI*(this.theta + Math.PI / 2)) );
-        return this.yc;
-    },
-    z : function () {
-        return this.zb * Math.sin(this.theta);
+    XA : 720,
+    ZB : 720,
+    YC : 200,
+    CENTER_X: 0,
+    CENTER_Z: 0,
+    getPosition: function() {
+        var ret = new THREE.Vector3(0,0,0);
+        ret.x = this.XA * Math.cos(this.theta) - this.CENTER_X;
+        ret.y = this.YC;
+        ret.z = this.ZB * Math.sin(this.theta) - this.CENTER_Z;
+        return ret;
     },
     increase : function () {
-        this.theta += degrees2radians(INCREASING_UNIT);
+        this.theta += degrees2radians(this.INCREASING_UNIT);
         while (this.theta > Math.PI) {
             this.theta -= 2 * Math.PI;
         }
+    },
+    animate: function() {
+        // ellipse
+        Camera.camera.position.copy(this.getPosition());
+        this.increase();
     }
 };
 
-function animate() {
-    // line
-    // camera.position.x = cameraAxisAnimate.x();
-    // camera.position.y = cameraAxisAnimate.y();
-    // camera.position.z = cameraAxisAnimate.z();
-    // cameraAxisAnimate.increase();
-
-    // ellipse
-    camera.position.x = cameraEllipseAnimate.x();
-    camera.position.y = cameraEllipseAnimate.y();
-    camera.position.z = cameraEllipseAnimate.z();
-    cameraEllipseAnimate.increase();
-}
-
-function render() {
+$(document).ready(function () {
     "use strict";
-    requestId = requestAnimationFrame(render);
+    Renderer.redraw();
+});
 
-    // 用于统计帧速率
-    frameCount++;
+var Renderer = {
+    canvasHeight: 1,
+    canvasWidth: 1,
+    requestId: null,
+    renderer: null,
+    DEFAULT_BACKGROUND_COLOR: 0x222222,
+    canvasResize: function(camera) {
+        "use strict";
+        /* 获取画布的宽和高
+         * 用jQuery.width()、jQuery.outerWidth()、document.getElementById(div_id).width获取宽高都会出问题。
+         * 但是用window.innerWidth可以取得很好的效果。
+         * 这两个变量在文档加载，窗口大小改变，显示左侧面板等改变画布大小的区域等情况下，都会更新。
+         */
+        this.canvasHeight = window.innerHeight;
+        this.canvasWidth = window.innerWidth;
+        if (camera) {
+            camera.aspect = this.canvasWidth / this.canvasHeight;
+            camera.updateProjectionMatrix();
+        }
+        if (this.renderer) {
+            this.renderer.setSize(this.canvasWidth, this.canvasHeight);
+        }
+    },
+    // Redraw(): It will redraw the whole canvas, so that we should call it as less as possible.
+    redraw: function () {
+        "use strict";
+        Camera.camera = new THREE.PerspectiveCamera(40, 2, 0.1, 10000);
+        // 每次窗口的大小发生改变时，也改变画布的大小
+        window.onresize = this.canvasResize(Camera.camera);
+        this.canvasResize(Camera.camera);
+        // 禁止用户选择文本，优化UI体验
+        document.body.onselectstart = function () {
+            return false;
+        };
 
-    // 控制是否播放动画
-    if (playAnimation) {
-        animate();
+        var i;
+        var listLength = scene.children.length;
+        for (i=0;i<listLength;i++) {
+            scene.remove(scene.children[0]);
+        }
+        // 为避免多个requestAnimationFrame()循环同时绘制图像，造成帧速率太高（远高于60FPS），停止已有的绘制刷新循环
+        if (this.requestId) {
+            window.cancelAnimationFrame(this.requestId);
+            this.requestId = undefined;
+        }
+
+        // -------------------------------------------------------------
+        // 初始化新的图形绘制，绘制整个场景
+        // -------------------------------------------------------------
+        // Three basic elements in Three.js: Scene, camera, renderer.
+        // 初始化渲染器为使用WebGL的绑定到ID为“canvas”的元素，参数使用JSON表示。
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('canvas')
+        });
+
+        // 重设渲染器的大小为窗口大小；否则，默认的渲染大小很小，在屏幕上显示出大的块状。
+        // setSize()同时会改变画布大小
+        this.renderer.setSize(this.canvasWidth, this.canvasHeight);
+        this.renderer.setClearColor(this.DEFAULT_BACKGROUND_COLOR);
+        if (window.devicePixelRatio) {
+            this.renderer.setPixelRatio(window.devicePixelRatio);
+        }
+        this.renderer.sortObjects = false;
+
+        Checkerboard.drawInScene();
+        Cuboids.drawInScene();
+        Spheres.drawInScene();
+        Lights.initialize();
+        Lights.updateLight();
+        Camera.initialize();
+
+        // 显示一个坐标轴，红色X，绿色Y，蓝色Z
+        var axisHelper = new THREE.AxisHelper(2000);
+        scene.add(axisHelper);
+
+        FPS();
+        Renderer.renderLoop();
+    },
+    renderLoop: function() {
+        "use strict";
+        var currentRenderer = window.Renderer;
+        currentRenderer.requestId = requestAnimationFrame(currentRenderer.renderLoop);
+
+        // 用于统计帧速率
+        frameCount++;
+
+        // 控制是否播放动画
+        if (playAnimation) {
+            currentRenderer.animate();
+        }
+        // Camera.update() 必须放在 animate() 的后边，不然会造成播放和暂停切换瞬间的抖动问题
+        Camera.update();
+
+        currentRenderer.renderer.render(scene, Camera.camera);
+    },
+    animate: function() {
+        cameraEllipseAnimate.animate(Camera.camera);
     }
-    // updateCamera()必须放在animate()的后边，不然会造成播放和暂停切换瞬间的抖动问题
-    updateCamera();
-
-    renderer.render(scene, camera);
-}
-
+};
