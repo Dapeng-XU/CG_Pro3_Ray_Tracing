@@ -387,6 +387,7 @@ var Renderer = {
         // Three basic elements in Three.js: Scene, camera, renderer.
         // 初始化渲染器为使用WebGL的绑定到ID为“canvas”的元素，参数使用JSON表示。
         this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
             canvas: document.getElementById('canvas')
         });
 
